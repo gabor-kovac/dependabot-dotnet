@@ -10,3 +10,5 @@ jobs:
       
     - name: Check Dependencies
       uses: mawosoft/dotnet-dependency-alert@v1
+      with:
+        token: ${{ secrets.CR_PAT }}
