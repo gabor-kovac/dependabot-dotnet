@@ -3,7 +3,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  check_vulnerabilities:
+  check_trivy:
     runs-on: ubuntu-22.04
     steps:
     - name: Install dependencies
@@ -14,8 +14,8 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v4
 
-    - run: chmod +x check-vulnerable.sh
+    - run: chmod +x trivy-scan.sh
       
-    - name: Check vulnerabilities
-      run: ./check-vulnerable.sh
+    - name: Run Trivy script
+      run: ./trivy-scan.sh
     
