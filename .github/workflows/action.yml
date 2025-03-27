@@ -6,9 +6,10 @@ jobs:
   check_vulnerabilities:
     runs-on: ubuntu-22.04
     steps:
-    - name: Install Trivy
+    - name: Install dependencies
       run: |
         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.60.0
+        pip install jtbl
       
     - name: Checkout source
       uses: actions/checkout@v4
