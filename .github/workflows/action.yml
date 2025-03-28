@@ -3,18 +3,19 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  check_vulnerabilities:
+  check_trivy:
     runs-on: ubuntu-22.04
     steps:
-    - name: Install Trivy
+    - name: Install dependencies
       run: |
         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.60.0
+        pip install jtbl
       
     - name: Checkout source
       uses: actions/checkout@v4
 
-    - run: chmod +x check-vulnerable.sh
+    - run: chmod +x trivy-scan.sh
       
-    - name: Check vulnerabilities
-      run: ./check-vulnerable.sh
+    - name: Run Trivy script
+      run: ./trivy-scan.sh
     
