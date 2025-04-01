@@ -3,7 +3,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  check_trivy:
+  Check_Trivy:
     runs-on: ubuntu-22.04
     steps:
     - name: Install dependencies
