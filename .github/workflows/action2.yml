@@ -1,0 +1,9 @@
+on:
+  push:
+
+jobs:
+  Write_Kapa:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Echo kapa
+      run: echo kapa
