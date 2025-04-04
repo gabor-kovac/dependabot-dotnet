@@ -5,14 +5,13 @@ on:
     types: [my-check]
 
 jobs:
-  timeout_minutes: 15
   check_trivy:
     permissions:
       checks: write   # Permission to create a Check Run
       contents: write # Permission to write a repository_dispatch requests
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     steps:
-      
     - name: Acknowledge Request
       env:
         GH_TOKEN: ${{ github.token }}
