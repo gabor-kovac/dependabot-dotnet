@@ -43,8 +43,12 @@ jobs:
       id: prepare_results
       if: always() && steps.trivy_scan_step.outcome == 'failure'
       run: |
-        echo "vulnerability_report_table=$(cat /tmp/trivy_vuln_report_table.md)" >> $GITHUB_OUTPUT
-        echo "license_report_table=$(cat /tmp/trivy_license_report_table.md)" >> $GITHUB_OUTPUT
+        echo "vulnerability_report_table<<EOF" >> $GITHUB_OUTPUT
+        cat /tmp/trivy_vuln_report_table.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "license_report_table<<EOF" >> $GITHUB_OUTPUT
+        cat /tmp/trivy_license_report_table.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Complete Check
       if: always() && steps.trivy_scan_step.outcome == 'success'
