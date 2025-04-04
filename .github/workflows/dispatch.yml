@@ -1,11 +1,12 @@
-name: Dispatched workflow
+name: Dispatch quality gate
 
 on:
   repository_dispatch:
     types: [my-check]
 
 jobs:
-  myEvent:
+  timeout_minutes: 15
+  check_trivy:
     permissions:
       checks: write   # Permission to create a Check Run
       contents: write # Permission to write a repository_dispatch requests
@@ -19,27 +20,35 @@ jobs:
         gh api -X PATCH -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           -f 'status=in_progress' \
-          -f 'output[title]=My Check Run Title 🤔' \
-          -f 'output[summary]=A *fancy* summary' \
-          -f 'output[images][][image_url]=https://www.kenmuse.com/favicon/apple-touch-icon.png' \
-          -f 'output[images][][caption]=Sample from kenmuse.com' \
-          -f 'output[images][][alt]=Logo for kenmuse.com' \
+          -f 'output[title]=Quality gate in progress' \
+          -f 'output[summary]=Preparing to scan with Trivy' \
+          -f 'output[images][][image_url]=https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTndvw076pug5uBbdakWWU10q9t4e1zsaV_oQ&s' \
+          -f 'output[images][][alt]=Trivy logo' \
           /repos/${{ github.repository }}/check-runs/${{ github.event.client_payload.checkRunId }}
     
-    ####################################################
-    # Actually, we'll just sleep to simulate some work
-    ####################################################
-    - name: Processing        
-      run: sleep 10
+    - name: Install dependencies
+      run: |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.60.0
+        pip install jtbl
+    
+    - name: Checkout source
+      uses: actions/checkout@v4
 
-    #####################################################
-    # Send a final message to complete the run and
-    # provide any final updates. Doing this one in JSON
-    # to make it more readable. This approach can also
-    # be used to get total control over the serialized
-    # data types (for example, integers).
-    #####################################################
+    - run: chmod +x trivy-scan.sh
+      
+    - name: Run Trivy script
+      id: trivy_scan_step
+      run: ./trivy-scan.sh
+
+    - name: Prepare results
+      id: prepare_results
+      if: always() && steps.trivy_scan_step.outcome == 'failure'
+      run: |
+        echo "vulnerability_report_table=$(cat /tmp/trivy_vuln_report_table.md)" >> $GITHUB_OUTPUT
+        echo "license_report_table=$(cat /tmp/trivy_license_report_table.md)" >> $GITHUB_OUTPUT
+
     - name: Complete Check
+      if: always() && steps.trivy_scan_step.outcome == 'success'
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
@@ -49,11 +58,29 @@ jobs:
           --input - <<- EOF
           {
             "conclusion": "success",
-            "details_url": "https://details.kenmuse.com",
             "output": {
-              "title": "My Check Run Title 🚀",
-              "summary": "**Summary**: The run completed.",
-              "text": "Everything worked as expected. You should see a logo above."
+              "title": "Quality gate passed ✅",
+              "summary": "Trivy scan completed successfully.",
+              "text": ""
+             }
+          }
+        EOF
+
+    - name: Complete Check
+      if: always() && steps.trivy_scan_step.outcome == 'failure'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh api -X PATCH -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/${{ github.repository }}/check-runs/${{ github.event.client_payload.checkRunId }} \
+          --input - <<- EOF
+          {
+            "conclusion": "failure",
+            "output": {
+              "title": "Quality gate failed 🚨",
+              "summary": "Trivy scan found issues that need to be addressed before merging is allowed.",
+              "text": "### Vulnerable packages have been found \n${{ steps.prepare_results.outputs.vulnerability_report_table }}\n### License issues have been found\n${{ steps.prepare_results.outputs.license_report_table }}"
              }
           }
         EOF
