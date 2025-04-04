@@ -43,11 +43,8 @@ jobs:
       id: prepare_results
       if: always() && steps.trivy_scan_step.outcome == 'failure'
       run: |
-        echo "vulnerability_report_table<<EOF" >> $GITHUB_OUTPUT
-        cat /tmp/trivy_vuln_report_table.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        echo "license_report_table<<EOF" >> $GITHUB_OUTPUT
-        cat /tmp/trivy_license_report_table.md >> $GITHUB_OUTPUT
+        echo "output_summary_path<<EOF" >> $GITHUB_OUTPUT
+        cat /tmp/trivy_output_summary.md >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Complete Check
@@ -83,7 +80,7 @@ jobs:
             "output": {
               "title": "Quality gate failed 🚨",
               "summary": "Trivy scan found issues that need to be addressed before merging is allowed.",
-              "text": "### Vulnerable packages have been found \n${{ steps.prepare_results.outputs.vulnerability_report_table }}\n### License issues have been found\n${{ steps.prepare_results.outputs.license_report_table }}"
+              "text": "${{ steps.prepare_results.outputs.output_summary_path }}"
              }
           }
         EOF
