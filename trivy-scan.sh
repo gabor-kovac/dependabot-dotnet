@@ -28,6 +28,8 @@ TRIVY_LICENSE_REPORT_PATH="/tmp/trivy_license_report.json"
 VULN_TABLE_PATH="/tmp/trivy_vuln_report_table.md"
 LICENSE_TABLE_PATH="/tmp/trivy_license_report_table.md"
 
+OUTPUT_SUMMARY_PATH="/tmp/trivy_output_summary.md"
+
 VULN_SCAN_RESULT=0
 LICENSE_SCAN_RESULT=0
 EXIT_CODE=0
@@ -51,7 +53,11 @@ if [ "$VULN_SCAN_RESULT" -eq 1 ]; then
     jq -c '.Results[] | select(.Class == "lang-pkgs") | .Target as $TARGET | .Type as $TYPE | select(has("Vulnerabilities")) | .Vulnerabilities[] | {Package: .PkgName, Installed: .InstalledVersion, "Fixed version": .FixedVersion, ID: .VulnerabilityID, Severity: .Severity, Title: .Title, Target: $TARGET, Type: $TYPE}' "$TRIVY_VULN_REPORT_PATH" | jtbl --markdown > "$VULN_TABLE_PATH"
     echo "Vulnerable packages have been found!" >&2
     echo "### Vulnerable packages have been found" >> $GITHUB_STEP_SUMMARY
+    echo "### Vulnerable packages have been found" >> $OUTPUT_SUMMARY_PATH
+
     cat "$VULN_TABLE_PATH" >> $GITHUB_STEP_SUMMARY
+    cat "$VULN_TABLE_PATH" >> $OUTPUT_SUMMARY_PATH
+
     echo "VULNERABLE_PACKAGES_FOUND=true" >> $GITHUB_OUTPUT
 fi
 
@@ -60,7 +66,11 @@ if [ "$LICENSE_SCAN_RESULT" -eq 1 ]; then
     jq -c '.Results[] | select(.Class == "license") | select(has("Licenses")) | .Licenses[] | {Package: .PkgName, License: .Name, Category: .Category, Severity: .Severity, Path: .FilePath}' "$TRIVY_LICENSE_REPORT_PATH" | jtbl --markdown > "$LICENSE_TABLE_PATH"
     echo "License issues have been found!" >&2
     echo "### License issues have been found" >> $GITHUB_STEP_SUMMARY
+    echo "### License issues have been found" >> $OUTPUT_SUMMARY_PATH
+
     cat "$LICENSE_TABLE_PATH" >> $GITHUB_STEP_SUMMARY
+    cat "$LICENSE_TABLE_PATH" >> $OUTPUT_SUMMARY_PATH
+
     echo "LICENSE_ERROR_FOUND=true" >> $GITHUB_OUTPUT
 fi
 
