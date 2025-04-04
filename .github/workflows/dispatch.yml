@@ -6,6 +6,9 @@ on:
 
 jobs:
   myEvent:
+    permissions:
+      checks: write   # Permission to create a Check Run
+      contents: write # Permission to write a repository_dispatch requests
     runs-on: ubuntu-22.04
     steps:
       
